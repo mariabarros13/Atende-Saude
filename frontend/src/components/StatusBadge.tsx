@@ -1,27 +1,38 @@
 import type { StatusSolicitacao } from '../types/solicitacao';
 
-const statusColors: Record<StatusSolicitacao, { bg: string; color: string }> = {
-  RECEBIDA: { bg: '#e3f2fd', color: '#0d47a1' },
-  EM_ANALISE: { bg: '#fff3e0', color: '#e65100' },
-  AGENDADA: { bg: '#f3e5f5', color: '#4a148c' },
-  CONCLUIDA: { bg: '#e8f5e9', color: '#1b5e20' },
-  CANCELADA: { bg: '#ffebee', color: '#b71c1c' },
-};
+interface StatusBadgeProps {
+  status: StatusSolicitacao;
+}
 
-export function StatusBadge({ status }: { status: StatusSolicitacao }) {
-  const style = statusColors[status] || { bg: '#eee', color: '#333' };
+export function StatusBadge({ status }: StatusBadgeProps) {
+  const styles = {
+    RECEBIDA: 'bg-blue-50 text-blue-700 border-blue-200/60 dot-blue-500',
+    EM_ANALISE: 'bg-indigo-50 text-indigo-700 border-indigo-200/60 dot-indigo-500',
+    AGENDADA: 'bg-sky-50 text-sky-700 border-sky-200/60 dot-sky-500',
+    CONCLUIDA: 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dot-emerald-500',
+    CANCELADA: 'bg-rose-50 text-rose-700 border-rose-200/60 dot-rose-500',
+  };
+
+  const dots = {
+    RECEBIDA: 'bg-blue-500',
+    EM_ANALISE: 'bg-indigo-500',
+    AGENDADA: 'bg-sky-500',
+    CONCLUIDA: 'bg-emerald-500',
+    CANCELADA: 'bg-rose-500',
+  };
+
+  const labels = {
+    RECEBIDA: 'Recebida',
+    EM_ANALISE: 'Em Análise',
+    AGENDADA: 'Agendada',
+    CONCLUIDA: 'Concluída',
+    CANCELADA: 'Cancelada',
+  };
 
   return (
-    <span style={{
-      backgroundColor: style.bg,
-      color: style.color,
-      padding: '0.25rem 0.6rem',
-      borderRadius: '12px',
-      fontSize: '0.85rem',
-      fontWeight: 'bold',
-      display: 'inline-block'
-    }}>
-      {status.replace('_', ' ')}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${styles[status]}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dots[status]}`} />
+      {labels[status]}
     </span>
   );
 }
