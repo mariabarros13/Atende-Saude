@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ListFilter, PlusCircle, Search, Activity } from 'lucide-react';
+import { LayoutDashboard, ListFilter, PlusCircle, Search, Activity, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -7,6 +8,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const { user, signOut } = useAuth(); // Extrai os dados do utilizador e a função de logout
 
   const isSelected = (path: string) => location.pathname === path;
 
@@ -86,10 +88,25 @@ export function Layout({ children }: LayoutProps) {
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
-              RS
+          {/* Perfil e Botão Sair */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                {user?.name ? user.name.slice(0, 2).toUpperCase() : 'US'}
+              </div>
+              <div className="hidden md:block text-left">
+                <p className="text-xs font-bold text-slate-800 leading-tight">{user?.name || 'Administrador'}</p>
+                <p className="text-[10px] text-slate-400">{user?.email || 'admin@atendesaude.gov.br'}</p>
+              </div>
             </div>
+
+            <button
+              onClick={signOut}
+              title="Encerrar Sessão"
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-2 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </header>
 
