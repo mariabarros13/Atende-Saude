@@ -180,10 +180,39 @@ src/
 Na raiz do projeto:
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
 O backend cria `backend/.env` e gera `APP_KEY` somente quando esses itens ainda não existem. Ele também aplica as migrations antes de iniciar a API. O volume do PostgreSQL é preservado entre reinicializações.
+
+Confira se os três serviços estão ativos:
+
+```bash
+docker compose ps
+```
+
+O frontend fica disponível em `http://localhost:3000`. Para verificar a API e o banco, execute:
+
+Para validar a API e o banco:
+
+```bash
+curl.exe -i http://localhost:8000/api/v1/me
+docker compose exec backend php artisan migrate:status
+```
+
+Resultado esperado:
+
+GET /api/v1/me sem autenticação retorna 401 Unauthorized com {"message":"Unauthenticated."}.
+
+php artisan migrate:status deve listar todas as migrations como Ran.
+
+Para testar o fluxo autenticado pela primeira vez, crie o usuário e as solicitações de demonstração:
+
+```powershell
+docker compose exec backend php artisan db:seed --force
+```
+
+Entre no frontend em `http://localhost:3000/login` com `admin@atendesaude.gov.br` e senha `12345678`. O seeder cria dados de demonstração; execute-o uma única vez para evitar duplicar as solicitações.
 
 Para parar os containers sem apagar os dados:
 

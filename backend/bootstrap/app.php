@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // O backend não possui tela de login web; visitantes anônimos não devem
         // ser redirecionados para uma rota nomeada "login" inexistente.
+        // Esta aplicação não possui uma rota de login web; visitantes anônimos
+        // devem seguir para o tratamento de autenticação (401), sem redirect.
         $middleware->redirectGuestsTo(fn (Request $request) => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
