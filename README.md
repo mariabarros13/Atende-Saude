@@ -180,17 +180,28 @@ src/
 Na raiz do projeto:
 
 ```bash
-docker compose down -v
 docker compose up --build
 ```
 
-Esse fluxo remove volumes antigos e recria completamente o ambiente.
+O backend cria `backend/.env` e gera `APP_KEY` somente quando esses itens ainda não existem. Ele também aplica as migrations antes de iniciar a API. O volume do PostgreSQL é preservado entre reinicializações.
+
+Para parar os containers sem apagar os dados:
+
+```bash
+docker compose down
+```
+
+Para apagar também os dados do banco e começar do zero (ação destrutiva):
+
+```bash
+docker compose down --volumes
+```
 
 ### Arquivos de ambiente
 
-Antes da primeira execução:
+Opcionalmente, antes da primeira execução:
 
-- copie `backend/.env.example` para `backend/.env`;
+- copie `backend/.env.example` para `backend/.env` e ajuste as configurações locais;
 - copie `frontend/.env.example` para `frontend/.env`, caso exista.
 
 Nunca versione credenciais reais.

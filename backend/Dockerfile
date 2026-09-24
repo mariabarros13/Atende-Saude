@@ -29,5 +29,7 @@ RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
 
 EXPOSE 8000
 
-# Inicia o servidor do Laravel
-CMD php artisan serve --host=0.0.0.0 --port=8000
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["docker-entrypoint.sh"]

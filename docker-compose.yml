@@ -38,7 +38,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./backend:/var/www
+      - ./backend:/app
 
   # Frontend React
   frontend:

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Plus, ArrowRight, Inbox, Search, Calendar, CheckCircle2 } from 'lucide-react';
 import { solicitacoesService } from '../services/solicitacoes';
@@ -9,15 +10,44 @@ import { Loading } from '../components/Loading';
 export function Dashboard() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
-    solicitacoesService.listar().then((res) => {
-      setSolicitacoes(res.data);
-      setLoading(false);
-    });
-  }, []);
+    async function carregarSolicitacoes() {
+      setLoading(true);
+      setErro(null);
+
+      try {
+        const res = await solicitacoesService.listar();
+        setSolicitacoes(res.data);
+      } catch (err: unknown) {
+        setErro(axios.isAxiosError(err)
+          ? `Não foi possível carregar os dados${err.response?.status ? ` (HTTP ${err.response.status})` : ''}. Verifique a API e sua sessão.`
+          : 'Não foi possível carregar os dados do dashboard.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void carregarSolicitacoes();
+  }, [tentativa]);
 
   if (loading) return <Loading />;
+
+  if (erro) {
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center">
+        <p className="text-sm font-medium text-rose-700">{erro}</p>
+        <button
+          onClick={() => setTentativa((atual) => atual + 1)}
+          className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   // Mapeamento por Status
   const recebidas = solicitacoes.filter((s) => s.status === 'RECEBIDA').length;
