@@ -1,97 +1,419 @@
-# 🏥 AtendeSaúde — Sistema de Solicitações de Atendimento para Saúde Pública
+# 🏥 Atende Saúde — Sistema de Solicitações de Atendimento para Saúde Pública
 
-> **Desafio Técnico Full Stack — Seleção V-Lab (CIn / UFPE)**
-> Aplicação desenvolvida para registro, triagem e acompanhamento de solicitações de atendimento em unidades de saúde pública.
+> **Desafio Técnico Full Stack — Seleção V-Lab (CIn/UFPE)**
 
----
-
-## 📌 1. Visão Geral e Objetivo
-
-O **AtendeSaúde** é uma solução Full Stack moderna e desacoplada projetada para otimizar o encaminhamento e a gestão de solicitações de atendimento (consultas, exames, vacinações e outros serviços) em unidades públicas de saúde.
-
-O objetivo do projeto é fornecer uma interface clara e intuitiva para os cidadãos e operadores da saúde, acompanhada por uma API REST robusta e confiável responsável por aplicar estritamente as regras de negócio, a geração automática de protocolos únicos e o controle de transições de status da triagem.
+Aplicação desenvolvida para registro, triagem e acompanhamento de solicitações de atendimento em unidades de saúde pública.
 
 ---
 
-## ⚙️ 2. Stack Tecnológica
+## Tecnologias
 
-| Camada | Tecnologia | Descrição |
-| :--- | :--- | :--- |
-| **Frontend** | **React + TypeScript** | SPA com tipagem forte, componentes coesos e navegação fluida |
-| **Backend** | **PHP + Laravel** | API REST estruturada, desacoplada e centralizadora das regras do domínio |
-| **Banco de Dados** | **PostgreSQL** | Persistência relacional com versionamento via Migrations do Laravel |
-| **Infraestrutura** | **Docker & Docker Compose** | Execução integrada e ambiente totalmente reproduzível |
-| **Documentação** | **OpenAPI (Swagger)** | Especificação completa dos contratos da API REST |
-
----
-
-## 📋 3. Modelo de Dados e Regras de Negócio
-
-### 3.1 Entidade Principal: `Solicitacao`
-* **`id`**: Identificador único UUID/Auto-incremento.
-* **`protocolo`**: Código único gerado automaticamente no momento da criação (ex: `ATD-2026-XXXXX`).
-* **`nome_solicitante`**: Nome do cidadão (dados estritamente fictícios).
-* **`categoria`**: Enum (`CONSULTA`, `EXAME`, `VACINACAO`, `OUTRO`).
-* **`prioridade`**: Enum (`BAIXA`, `MEDIA`, `ALTA`, `URGENTE`).
-* **`status`**: Enum (`RECEBIDA`, `EM_ANALISE`, `AGENDADA`, `CONCLUIDA`, `CANCELADA`).
-* **`descricao`**: Resumo/detalhes da solicitação.
-* **`justificativa_prioridade`**: Texto explicativo (**obrigatório** se a prioridade for `URGENTE`).
-* **`created_at` / `updated_at`**: Registros temporais gerenciados automaticamente.
-
-### 3.2 Regras de Negócio e Máquina de Estados
-1. **Status Inicial**: Toda solicitação é obrigatoriamente criada com o status `RECEBIDA`.
-2. **Geração de Protocolo**: Gerado de forma única e automática no cadastro.
-3. **Validação de Urgência**: Se a prioridade selecionada for `URGENTE`, o campo `justificativa_prioridade` é obrigatório.
-4. **Fluxo de Transição de Status**:
-   * `RECEBIDA` ➔ Permite transição para `EM_ANALISE` ou `CANCELADA`.
-   * `EM_ANALISE` ➔ Permite transição para `AGENDADA` ou `CANCELADA`.
-   * `AGENDADA` ➔ Permite transição para `CONCLUIDA` ou `CANCELADA`.
-   * `CONCLUIDA` / `CANCELADA` ➔ **Status Finais** (não permitem qualquer alteração posterior).
+![Laravel](https://img.shields.io/badge/Laravel-12-red?logo=laravel)
+![React](https://img.shields.io/badge/React-19-blue?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?logo=postgresql)
+![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)
+![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-green)
 
 ---
 
-## 🏗️ 4. Descrição das Camadas da Aplicação
+## Visão Geral
 
-### 4.1 Backend (Laravel API REST)
-* **Validações Seguras**: Uso de *Form Requests* dedicados para sanitarização de dados e retornos HTTP apropriados (`400`, `422`, `404`, etc.).
-* **Camada de Serviço / Máquina de Estados**: As regras de transição de status ficam isoladas em uma camada de serviço dedicada (`SolicitacaoService` / `StatusMachine`), mantendo os *Controllers* magros e responsáveis apenas pelo ciclo de requisição/resposta.
-* **OpenAPI Spec**: Especificação mantida na raiz do repositório (`/docs/openapi.yaml`).
+O **Atende Saúde** é uma aplicação Full Stack desenvolvida para organizar o ciclo de vida de solicitações de atendimento em unidades de saúde pública.
 
-### 4.2 Frontend (React com TypeScript)
-* **Organização por Domínio**: Componentes modulares (UI, Formulários, Cards, Modais).
-* **Gestão de Estados Assíncronos**: Trata adequadamente cenários de `Loading`, `Success`, `Error` e `Empty State`.
-* **Funcionalidades e Telas**:
-  * Dashboard introdutório com métricas agrupadas por status/prioridade.
-  * Tabela/Listagem paginada com filtros combinados por Categoria, Prioridade e Status.
-  * Formulário de criação com validação dinâmica client-side.
-  * Visualização de detalhes com botões inteligentes que exibem apenas as opções válidas de alteração de status.
+O projeto combina uma API versionada em Laravel com uma interface React responsiva, mantendo as regras de negócio centralizadas no backend e oferecendo ao usuário uma experiência clara para acompanhar cada solicitação.
 
-### 4.3 Banco de Dados (PostgreSQL)
-* **Integridade**: Restrições do tipo *unique* no protocolo e campos obrigatórios (`NOT NULL`).
-* **Performance**: Índices otimizados para campos frequentemente consultados nos filtros (`status`, `categoria`, `prioridade`).
-* **Versionamento**: Gerenciado 100% por Migrations do Laravel, incluindo Seeds/Factories para carga de dados fictícios de testes.
+O foco do desafio foi construir uma solução com:
+
+- organização da arquitetura;
+- regras de negócio bem definidas;
+- documentação completa;
+- experiência do usuário consistente;
+- facilidade de execução via Docker.
 
 ---
 
-## 🧪 5. Testes, Qualidade e Confiabilidade
+## Funcionalidades
 
-O projeto adota uma abordagem focada em cenários relevantes e determinísticos:
-
-* **Backend (PHPUnit / Pest)**:
-  * Teste unitário/de integração da máquina de estados (garantindo bloqueio de transições inválidas).
-  * Teste de validação da obrigatoriedade do campo `justificativa_prioridade` para urgências.
-  * Teste de criação e geração única de protocolo.
-* **Frontend (Vitest + React Testing Library)**:
-  * Teste de integração do formulário de criação.
-  * Testes de renderização de estados de carregamento, erro e listagem vazia.
+- Login com Laravel Sanctum.
+- Rotas protegidas.
+- Dashboard com indicadores.
+- Criação de solicitações.
+- Protocolo único automático.
+- Listagem paginada.
+- Filtros por status, categoria e prioridade.
+- Tela de detalhes completa.
+- Timeline de auditoria.
+- Atualização de status.
+- Máquina de estados protegida.
+- Justificativa obrigatória para prioridade urgente.
+- Skeleton Loading.
+- Toasts de feedback.
+- Interface responsiva.
 
 ---
 
-## 7. Declaração do Uso de Inteligência Artificial
-Em conformidade com as diretrizes do edital, declaramos o uso transparente de ferramentas de IA durante o desenvolvimento:
+# Fluxo da Solicitação
 
-Planejamento e Arquitetura: Apoio na estruturação do plano de projeto, divisão por fases e escrita da documentação/README.
+A evolução dos atendimentos segue uma máquina de estados centralizada no backend.
 
-Geração de Boilerplates: Auxílio na criação de arquivos de configuração iniciais (Docker, TypeScript e Schemas de Migration).
+```text
+RECEBIDA
+    │
+    ▼
+EM_ANALISE
+    │
+    ▼
+AGENDADA
+    │
+    ▼
+CONCLUIDA
 
-Criação de Dados Fictícios: Suporte na elaboração de dados simulados (seeders/factories) sem incluir qualquer dado pessoal ou clínico real.
+ou
+
+CANCELADA
+```
+
+### Regras importantes
+
+- `RECEBIDA → EM_ANALISE`
+- `EM_ANALISE → AGENDADA`
+- `AGENDADA → CONCLUIDA`
+- `CANCELADA` pode ocorrer apenas quando permitido pelo fluxo.
+
+A interface remove o botão de alteração quando uma solicitação chega em **CONCLUIDA**, evitando operações inválidas.
+
+Mesmo assim, a proteção definitiva permanece no `SolicitacaoService`, impedindo transições inválidas mesmo que a API seja chamada diretamente.
+
+---
+
+# Stack Tecnológica
+
+| Camada | Tecnologias |
+|---------|------------|
+| Backend | Laravel 12, PHP 8.3 |
+| Banco | PostgreSQL |
+| Autenticação | Laravel Sanctum |
+| Frontend | React + TypeScript |
+| Build | Vite |
+| Estilização | Tailwind CSS v4 |
+| Comunicação | Axios |
+| Navegação | React Router |
+| Containers | Docker Compose |
+| Testes | PHPUnit, Vitest, React Testing Library |
+| Documentação | OpenAPI 3.1 |
+
+---
+
+# Arquitetura
+
+O projeto foi organizado por responsabilidade.
+
+## Estrutura do repositório
+
+```text
+backend/
+frontend/
+docs/
+docker-compose.yml
+```
+
+## Backend
+
+```text
+Controllers
+      │
+      ▼
+SolicitacaoService
+      │
+      ▼
+Form Requests
+      │
+      ▼
+API Resources
+      │
+      ▼
+PostgreSQL
+```
+
+### Organização
+
+- Controllers enxutos.
+- Service Pattern (`SolicitacaoService`).
+- Form Requests para validações.
+- API Resources para o contrato público.
+- UUID v4 como chave primária.
+- Migrations, Seeders e Factories.
+
+## Frontend
+
+```text
+src/
+├── api/
+├── services/
+├── types/
+├── components/
+├── pages/
+├── router/
+└── tests/
+```
+
+### Organização
+
+- `AuthContext` controla autenticação.
+- `PrivateRoutes` protege páginas privadas.
+- Axios centraliza chamadas e interceptores.
+- Components reutilizáveis para StatusBadge, Stepper, Skeleton e Toasts.
+
+---
+
+# Executando com Docker
+
+## Pré-requisitos
+
+- Docker Desktop
+- Docker Compose
+- Git
+
+## Subindo o ambiente do zero
+
+Na raiz do projeto:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+Esse fluxo remove volumes antigos e recria completamente o ambiente.
+
+### Arquivos de ambiente
+
+Antes da primeira execução:
+
+- copie `backend/.env.example` para `backend/.env`;
+- copie `frontend/.env.example` para `frontend/.env`, caso exista.
+
+Nunca versione credenciais reais.
+
+---
+
+# Banco de Dados
+
+O projeto utiliza PostgreSQL com migrations versionadas.
+
+Dentro do container do backend:
+
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+Para recriar completamente o banco:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+---
+
+# Testes
+
+## Backend
+
+```bash
+cd backend
+php artisan test
+```
+
+## Frontend
+
+```bash
+cd frontend
+npm test
+```
+
+### Testes implementados
+
+Já foi implementado teste com:
+
+- Vitest
+- React Testing Library
+
+O teste verifica que o campo **Justificativa da Prioridade** aparece quando o usuário seleciona prioridade **URGENTE**, enquanto a validação definitiva permanece protegida pelo backend.
+
+---
+
+# API
+
+A API utiliza o prefixo:
+
+```text
+/api/v1
+```
+
+## OpenAPI
+
+A especificação está disponível em:
+
+```text
+docs/openapi.yaml
+```
+
+Ela documenta:
+
+- autenticação Bearer;
+- endpoints;
+- paginação;
+- UUID;
+- exemplos;
+- respostas;
+- máquina de estados;
+- schemas reutilizáveis.
+
+A especificação foi validada no **Swagger Editor**.
+
+---
+
+# Regras de Negócio
+
+Algumas regras importantes implementadas:
+
+| Regra | Implementação |
+|--------|--------------|
+| UUID v4 | Backend |
+| Protocolo único | Backend |
+| Prioridade urgente exige justificativa | Form Request |
+| Status inicial RECEBIDA | Backend |
+| Datas automáticas | Backend |
+| Máquina de estados | `SolicitacaoService` |
+| Botão oculto em CONCLUIDA | Frontend |
+| Proteção contra transições inválidas | Backend |
+
+Essa abordagem mantém uma boa experiência para o usuário sem confiar apenas na interface.
+
+---
+
+# Screenshots
+
+> Adicione as imagens em `docs/screenshots/`.
+
+## Dashboard
+
+<AsyncImage query="modern healthcare dashboard web application blue cards chart" aspectRatio="16:9"/>
+
+## Listagem
+
+<AsyncImage query="web application table with filters status priority healthcare requests" aspectRatio="16:9"/>
+
+## Detalhes
+
+<AsyncImage query="healthcare request details page stepper audit timeline web application" aspectRatio="16:9"/>
+
+## Nova Solicitação
+
+<AsyncImage query="healthcare web application form blue interface" aspectRatio="16:9"/>
+
+---
+
+# Diferenciais Técnicos
+
+O projeto foi desenvolvido priorizando boas práticas de arquitetura e experiência do usuário.
+
+### Backend
+
+- Service Pattern.
+- API Resources.
+- Form Requests.
+- UUID público.
+- Versionamento da API.
+- Regras de negócio centralizadas.
+
+### Frontend
+
+- Skeleton Loading.
+- Toasts flutuantes.
+- StatusBadge reutilizável.
+- Stepper de progresso.
+- Timeline de auditoria.
+- Empty States.
+- Responsividade.
+
+### UX
+
+- ações inválidas não são oferecidas ao usuário;
+- feedback imediato durante operações;
+- carregamentos suaves;
+- navegação protegida.
+
+---
+
+# Decisões Arquiteturais
+
+Algumas decisões importantes tomadas durante o desenvolvimento:
+
+### API Resources
+
+A representação pública da API foi separada da estrutura interna do banco através de `SolicitacaoResource`, mantendo um contrato consistente para o frontend.
+
+### Máquina de Estados
+
+A regra definitiva das transições permanece no backend.
+
+Mesmo ocultando ações inválidas na interface, a API continua protegida contra alterações indevidas.
+
+### Filtros
+
+Os filtros utilizam `filled()` e `where()` no Laravel, enquanto o frontend centraliza todas as chamadas em `services/solicitacoes.ts`.
+
+Essa separação evita duplicação de lógica.
+
+---
+
+# Uso de Inteligência Artificial
+
+Em conformidade com o edital, ferramentas de IA foram utilizadas como apoio durante o desenvolvimento para:
+
+- revisão de código;
+- refinamento da documentação;
+- auxílio na criação de boilerplates;
+- organização da arquitetura;
+- apoio na elaboração de dados fictícios para testes.
+
+Todas as decisões arquiteturais, implementação das regras de negócio, validações e testes foram revisados e validados durante o desenvolvimento.
+
+---
+
+# Estrutura Final
+
+```text
+.
+├── backend/
+├── frontend/
+├── docs/
+│   ├── openapi.yaml
+│   └── screenshots/
+└── docker-compose.yml
+```
+
+---
+
+# Status
+
+✅ Projeto funcional.
+
+Recursos implementados:
+
+- autenticação;
+- CRUD completo;
+- máquina de estados;
+- auditoria;
+- documentação OpenAPI;
+- testes;
+- Docker Compose;
+- interface responsiva.
+
+---
+
+# Licença
+
+Este projeto foi desenvolvido exclusivamente como parte do desafio técnico da seleção **V-Lab (CIn/UFPE)**.
