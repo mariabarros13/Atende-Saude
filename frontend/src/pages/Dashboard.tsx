@@ -19,8 +19,18 @@ export function Dashboard() {
       setErro(null);
 
       try {
-        const res = await solicitacoesService.listar();
-        setSolicitacoes(res.data);
+        const primeiraPagina = await solicitacoesService.listar();
+        const totalPaginas = primeiraPagina.meta?.last_page ?? 1;
+        const paginasRestantes = await Promise.all(
+          Array.from({ length: totalPaginas - 1 }, (_, indice) =>
+            solicitacoesService.listar({ page: indice + 2 })
+          )
+        );
+
+        setSolicitacoes([
+          ...primeiraPagina.data,
+          ...paginasRestantes.flatMap((pagina) => pagina.data),
+        ]);
       } catch (err: unknown) {
         setErro(axios.isAxiosError(err)
           ? `Não foi possível carregar os dados${err.response?.status ? ` (HTTP ${err.response.status})` : ''}. Verifique a API e sua sessão.`

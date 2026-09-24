@@ -18,7 +18,7 @@ class SolicitacaoSeeder extends Seeder
             'Paciente apresenta dor intensa e limitação de movimento; solicitada consulta com especialista.',
         ];
 
-        for ($i = 0; $i < 25; $i++) {
+        for ($i = Solicitacao::count(); $i < 50; $i++) {
             Solicitacao::factory()->create([
                 'status' => $status[$i % count($status)],
                 'descricao' => $descricoes[$i % count($descricoes)],

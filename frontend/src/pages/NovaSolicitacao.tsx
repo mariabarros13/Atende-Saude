@@ -125,10 +125,9 @@ export function NovaSolicitacao() {
 
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-2">
-            Descrição <span className="text-rose-500">*</span>
+            Descrição <span className="text-slate-400 font-normal">(opcional)</span>
           </label>
           <textarea
-            required
             rows={4}
             placeholder="Descreva detalhadamente a necessidade de atendimento..."
             value={descricao}

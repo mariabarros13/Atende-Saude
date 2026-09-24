@@ -18,7 +18,7 @@ class StoreSolicitacaoRequest extends FormRequest
             'nome_solicitante' => ['required', 'string', 'max:255'],
             'categoria'        => ['required', Rule::in(['CONSULTA', 'EXAME', 'VACINACAO', 'OUTRO'])],
             'prioridade'       => ['required', Rule::in(['BAIXA', 'MEDIA', 'ALTA', 'URGENTE'])],
-            'descricao'        => ['required', 'string'],
+            'descricao'        => ['nullable', 'string'],
             'justificativa_prioridade' => [
                 'nullable',
                 'string',
@@ -31,7 +31,6 @@ class StoreSolicitacaoRequest extends FormRequest
     {
         return [
             'nome_solicitante.required' => 'O nome do solicitante é obrigatório.',
-            'descricao.required' => 'A descrição é obrigatória.',
             'justificativa_prioridade.required' => 'A justificativa é obrigatória para solicitações urgentes.',
         ];
     }
