@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, ArrowRight, Inbox, Search, Calendar, CheckCircle2 } from 'lucide-react';
 import { solicitacoesService } from '../services/solicitacoes';
 import type { Solicitacao } from '../types/solicitacao';
-import { StatusBadge } from '../components/StatusBadge';
+import { StatusBadge, PriorityBadge } from '../components/StatusBadge';
 import { Loading } from '../components/Loading';
 
 export function Dashboard() {
@@ -131,13 +131,7 @@ export function Dashboard() {
                 <td className="py-4 px-6 font-medium text-slate-800">{item.nome_solicitante}</td>
                 <td className="py-4 px-6 text-slate-500">{item.categoria}</td>
                 <td className="py-4 px-6">
-                  {item.prioridade === 'URGENTE' ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                      ⚠ Urgente
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-500 font-medium">{item.prioridade}</span>
-                  )}
+                  <PriorityBadge priority={item.prioridade} />
                 </td>
                 <td className="py-4 px-6">
                   <StatusBadge status={item.status} />

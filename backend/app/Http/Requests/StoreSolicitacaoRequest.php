@@ -26,4 +26,13 @@ class StoreSolicitacaoRequest extends FormRequest
             ],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'nome_solicitante.required' => 'O nome do solicitante é obrigatório.',
+            'descricao.required' => 'A descrição é obrigatória.',
+            'justificativa_prioridade.required' => 'A justificativa é obrigatória para solicitações urgentes.',
+        ];
+    }
 }

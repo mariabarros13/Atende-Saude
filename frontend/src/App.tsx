@@ -8,6 +8,7 @@ import { DetalhesSolicitacao } from './pages/DetalhesSolicitacao';
 import { Login } from './pages/Login';
 import { RecuperarSenha } from './pages/RecuperarSenha';
 import { SolicitarAcesso } from './pages/SolicitarAcesso';
+import { ToastProvider } from './contexts/ToastContext';
 
 function PrivateRoutes() {
   const { signed, loading } = useAuth();
@@ -26,24 +27,26 @@ function PrivateRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Rotas Públicas */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-          <Route path="/solicitar-acesso" element={<SolicitarAcesso />} />
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+            <Route path="/solicitar-acesso" element={<SolicitarAcesso />} />
 
-          {/* Rotas Protegidas */}
-          <Route element={<PrivateRoutes />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/solicitacoes" element={<SolicitacoesList />} />
-            <Route path="/nova" element={<NovaSolicitacao />} />
-            <Route path="/solicitacoes/:id" element={<DetalhesSolicitacao />} />
-          </Route>
+            {/* Rotas Protegidas */}
+            <Route element={<PrivateRoutes />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/solicitacoes" element={<SolicitacoesList />} />
+              <Route path="/nova" element={<NovaSolicitacao />} />
+              <Route path="/solicitacoes/:id" element={<DetalhesSolicitacao />} />
+            </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

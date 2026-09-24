@@ -1,9 +1,23 @@
 import { api } from '../api/client';
-import type { Solicitacao, SolicitacaoInput, PaginatedResponse, StatusSolicitacao } from '../types/solicitacao';
+import type {
+  CategoriaSolicitacao,
+  PaginatedResponse,
+  PrioridadeSolicitacao,
+  Solicitacao,
+  SolicitacaoInput,
+  StatusSolicitacao,
+} from '../types/solicitacao';
+
+type FiltrosSolicitacao = {
+  status?: StatusSolicitacao;
+  categoria?: CategoriaSolicitacao;
+  prioridade?: PrioridadeSolicitacao;
+  page?: number;
+};
 
 export const solicitacoesService = {
   // 1. Tipamos o método get<> com a interface paginada.
-  async listar(params?: Record<string, string>): Promise<PaginatedResponse<Solicitacao>> {
+  async listar(params?: FiltrosSolicitacao): Promise<PaginatedResponse<Solicitacao>> {
     const response = await api.get<PaginatedResponse<Solicitacao>>('/solicitacoes', { params });
     // O Axios envelopa a resposta da web dentro do seu próprio objeto 'data'.
     // O retorno abaixo devolve a estrutura { data: [], links: {}, meta: {} } do Laravel.

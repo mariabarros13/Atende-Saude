@@ -1,140 +1,179 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { solicitacoesService } from '../services/solicitacoes';
-import type { Solicitacao } from '../types/solicitacao';
-import { Loading } from '../components/Loading';
-import { ErrorState } from '../components/ErrorState';
-import { StatusBadge } from '../components/StatusBadge'; // <-- Usando as cores institucionais!
+import type {
+  CategoriaSolicitacao,
+  PrioridadeSolicitacao,
+  Solicitacao,
+  StatusSolicitacao,
+} from '../types/solicitacao';
+import { TableSkeleton } from '../components/Skeleton';
+import { StatusBadge, PriorityBadge } from '../components/StatusBadge';
+import { useToast } from '../contexts/ToastContext';
 
 export function SolicitacoesList() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<StatusSolicitacao | ''>('');
+  const [categoria, setCategoria] = useState<CategoriaSolicitacao | ''>('');
+  const [prioridade, setPrioridade] = useState<PrioridadeSolicitacao | ''>('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [lastPage, setLastPage] = useState(1);
+  const { addToast } = useToast();
 
   useEffect(() => {
-    buscarDados();
-  }, []);
-
-  async function buscarDados() {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await solicitacoesService.listar(); 
-      setSolicitacoes(res.data);
-    } catch (err) {
-      setError('Não foi possível carregar os dados. Verifique a conexão com o servidor.');
-    } finally {
-      setLoading(false);
+    async function loadData() {
+      try {
+        setLoading(true);
+        const response = await solicitacoesService.listar({
+          ...(status ? { status } : {}),
+          ...(categoria ? { categoria } : {}),
+          ...(prioridade ? { prioridade } : {}),
+          page,
+        });
+        setSolicitacoes(response.data);
+        setTotal(response.meta?.total ?? response.data.length);
+        setLastPage(response.meta?.last_page ?? 1);
+      } catch (error) {
+        addToast('Erro ao carregar', 'Não foi possível carregar as solicitações.', 'error');
+      } finally {
+        setLoading(false);
+      }
     }
+
+    loadData();
+  }, [addToast, status, categoria, prioridade, page]);
+
+  function limparFiltros() {
+    setStatus('');
+    setCategoria('');
+    setPrioridade('');
+    setPage(1);
   }
 
-  const totalRecebidas = solicitacoes.filter(s => s.status === 'RECEBIDA').length;
-  const totalEmAnalise = solicitacoes.filter(s => s.status === 'EM_ANALISE').length;
-  const totalAgendadas = solicitacoes.filter(s => s.status === 'AGENDADA').length;
-  const totalConcluidas = solicitacoes.filter(s => s.status === 'CONCLUIDA').length;
-
-  if (loading) return <Loading />;
-  if (error) return <ErrorState mensagem={error} />;
-
   return (
-    // Fundo da página em cinza claro para destacar os cartões brancos
-    <div style={{ backgroundColor: '#F3F4F6', minHeight: '100vh', padding: '2rem', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
-        {/* Cabeçalho */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <div>
-            <h1 style={{ color: '#111827', fontSize: '1.8rem', margin: '0 0 0.5rem 0' }}>Painel de Solicitações</h1>
-            <p style={{ color: '#6B7280', margin: 0, fontSize: '0.95rem' }}>Visão geral e gestão de atendimentos de saúde.</p>
-          </div>
-          <Link 
-            to="/nova" 
-            style={{ 
-              backgroundColor: '#2563EB', // O teu Azul Institucional
-              color: '#fff', 
-              padding: '0.75rem 1.5rem', 
-              borderRadius: '8px', 
-              textDecoration: 'none',
-              fontWeight: '600',
-              boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)'
-            }}
-          >
-            + Nova Solicitação
-          </Link>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Solicitações</h1>
+          <p className="text-xs text-slate-500">{total} solicitações encontradas</p>
         </div>
+        <Link
+          to="/solicitacoes/nova"
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm"
+        >
+          + Nova Solicitação
+        </Link>
+      </div>
 
-        {/* DASHBOARD: Os 4 Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
-          <CardDashboard titulo="Novas / Recebidas" valor={totalRecebidas} cor="#6B7280" />
-          <CardDashboard titulo="Em Análise" valor={totalEmAnalise} cor="#F59E0B" />
-          <CardDashboard titulo="Agendadas" valor={totalAgendadas} cor="#2563EB" />
-          <CardDashboard titulo="Concluídas" valor={totalConcluidas} cor="#10B981" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm">
+        <label className="space-y-1.5">
+          <span className="block text-[11px] font-semibold text-slate-500">Status</span>
+          <select value={status} onChange={(event) => { setStatus(event.target.value as StatusSolicitacao | ''); setPage(1); }} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-blue-500 focus:outline-none">
+            <option value="">Todos os status</option>
+            <option value="RECEBIDA">Recebida</option>
+            <option value="EM_ANALISE">Em análise</option>
+            <option value="AGENDADA">Agendada</option>
+            <option value="CONCLUIDA">Concluída</option>
+            <option value="CANCELADA">Cancelada</option>
+          </select>
+        </label>
+        <label className="space-y-1.5">
+          <span className="block text-[11px] font-semibold text-slate-500">Categoria</span>
+          <select value={categoria} onChange={(event) => { setCategoria(event.target.value as CategoriaSolicitacao | ''); setPage(1); }} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-blue-500 focus:outline-none">
+            <option value="">Todas as categorias</option>
+            <option value="CONSULTA">Consulta médica</option>
+            <option value="EXAME">Exame laboratorial</option>
+            <option value="VACINACAO">Vacinação</option>
+            <option value="OUTRO">Outro</option>
+          </select>
+        </label>
+        <label className="space-y-1.5">
+          <span className="block text-[11px] font-semibold text-slate-500">Prioridade</span>
+          <select value={prioridade} onChange={(event) => { setPrioridade(event.target.value as PrioridadeSolicitacao | ''); setPage(1); }} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-blue-500 focus:outline-none">
+            <option value="">Todas as prioridades</option>
+            <option value="BAIXA">Baixa</option>
+            <option value="MEDIA">Média</option>
+            <option value="ALTA">Alta</option>
+            <option value="URGENTE">Urgente</option>
+          </select>
+        </label>
+        <div className="flex items-end">
+          <button type="button" onClick={limparFiltros} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+            Limpar filtros
+          </button>
         </div>
+      </div>
 
-        {/* TABELA DE LISTAGEM */}
-        <div style={{ backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-          
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid #E5E7EB' }}>
-            <h2 style={{ fontSize: '1.2rem', margin: 0, color: '#111827' }}>Últimas Solicitações</h2>
-          </div>
-          
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead style={{ backgroundColor: '#F9FAFB' }}>
-              <tr>
-                <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Protocolo</th>
-                <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solicitante</th>
-                <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Prioridade</th>
-                <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
-                <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.75rem', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ações</th>
+      {loading ? (
+        <TableSkeleton rows={6} />
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <th className="p-4">Protocolo</th>
+                <th className="p-4">Solicitante</th>
+                <th className="p-4">Categoria</th>
+                <th className="p-4">Prioridade</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Data</th>
+                <th className="p-4 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {solicitacoes.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-sm text-slate-500">Nenhuma solicitação encontrada com esses filtros.</td>
+                </tr>
+              )}
               {solicitacoes.map((item) => (
-                <tr key={item.id} style={{ borderBottom: '1px solid #E5E7EB', transition: 'background-color 0.2s' }}>
-                  <td style={{ padding: '1rem 1.5rem', fontWeight: '600', color: '#111827', fontSize: '0.9rem' }}>{item.protocolo}</td>
-                  <td style={{ padding: '1rem 1.5rem', color: '#374151', fontSize: '0.9rem' }}>{item.nome_solicitante}</td>
-                  <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem' }}>
-                    {item.prioridade === 'URGENTE' 
-                      ? <span style={{ color: '#DC2626', fontWeight: '600', backgroundColor: '#FEE2E2', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>Urgente</span> 
-                      : <span style={{ color: '#4B5563' }}>{item.prioridade}</span>}
+                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="p-4 font-bold text-blue-600 font-mono">
+                    {item.protocolo}
                   </td>
-                  <td style={{ padding: '1rem 1.5rem' }}>
+                  <td className="p-4 font-semibold text-slate-800">
+                    {item.nome_solicitante}
+                  </td>
+                  <td className="p-4 text-slate-600">
+                    {({ CONSULTA: 'Consulta Médica', EXAME: 'Exame Laboratorial', VACINACAO: 'Vacinação', OUTRO: 'Outro' }[item.categoria])}
+                  </td>
+                  <td className="p-4">
+                    <PriorityBadge priority={item.prioridade || 'Normal'} />
+                  </td>
+                  <td className="p-4">
                     <StatusBadge status={item.status} />
                   </td>
-                  <td style={{ padding: '1rem 1.5rem' }}>
-                    <Link to={`/solicitacoes/${item.id}`} style={{ color: '#2563EB', textDecoration: 'none', fontWeight: '600', fontSize: '0.9rem' }}>
-                      Abrir detalhe &rarr;
+                  <td className="p-4 text-slate-500 font-medium">
+                    {item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '01/11/2024'}
+                  </td>
+                  <td className="p-4 text-right">
+                    <Link
+                      to={`/solicitacoes/${item.id}`}
+                      className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/70 px-3 py-1.5 rounded-lg transition-colors inline-block border border-slate-200/60"
+                    >
+                      Ver detalhes
                     </Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs text-slate-500">Página {page} de {lastPage}</p>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1 || loading} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40">
+            Anterior
+          </button>
+          <button type="button" onClick={() => setPage((current) => Math.min(lastPage, current + 1))} disabled={page >= lastPage || loading} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40">
+            Próxima
+          </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Subcomponente de Cartão aprimorado
-function CardDashboard({ titulo, valor, cor }: { titulo: string; valor: number; cor: string }) {
-  return (
-    <div style={{ 
-      backgroundColor: '#fff', 
-      padding: '1.5rem', 
-      borderRadius: '12px', 
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-      border: '1px solid #E5E7EB',
-      borderTop: `4px solid ${cor}`
-    }}>
-      <h3 style={{ fontSize: '0.85rem', color: '#6B7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 0.5rem 0', letterSpacing: '0.05em' }}>
-        {titulo}
-      </h3>
-      <p style={{ fontSize: '2.5rem', fontWeight: '700', color: '#111827', margin: 0, lineHeight: 1 }}>
-        {valor}
-      </p>
     </div>
   );
 }

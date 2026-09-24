@@ -3,12 +3,21 @@
 namespace Tests\Feature;
 
 use App\Models\Solicitacao;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class SolicitacaoApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Sanctum::actingAs(User::factory()->create());
+    }
 
     public function test_deve_criar_uma_solicitacao_com_sucesso()
     {
@@ -49,6 +58,30 @@ class SolicitacaoApiTest extends TestCase
             'status' => 'CONCLUIDA',
         ]);
 
-        $response->assertStatus(422);
+        $response->assertStatus(409);
+    }
+
+    public function test_deve_filtrar_solicitacoes_por_status(): void
+    {
+        Solicitacao::factory()->create(['status' => 'EM_ANALISE']);
+        Solicitacao::factory()->create(['status' => 'RECEBIDA']);
+
+        $response = $this->getJson('/api/v1/solicitacoes?status=EM_ANALISE');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'EM_ANALISE');
+    }
+
+    public function test_nao_deve_permitir_reabrir_solicitacao_concluida(): void
+    {
+        $solicitacao = Solicitacao::factory()->create(['status' => 'CONCLUIDA']);
+
+        $response = $this->patchJson("/api/v1/solicitacoes/{$solicitacao->id}/status", [
+            'status' => 'EM_ANALISE',
+        ]);
+
+        $response->assertStatus(409)
+            ->assertJsonPath('message', 'Transição de status não permitida.');
     }
 }

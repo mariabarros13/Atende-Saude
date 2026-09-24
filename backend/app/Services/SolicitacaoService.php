@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Solicitacao;
-use Exception;
+use DomainException;
 use Illuminate\Support\Str;
 
 class SolicitacaoService
@@ -40,12 +40,12 @@ class SolicitacaoService
 
         // Verifica se o status atual permite transições
         if (in_array($statusAtual, ['CONCLUIDA', 'CANCELADA'])) {
-            throw new Exception("Não é possível alterar o status de uma solicitação que já está {$statusAtual}.", 422);
+            throw new DomainException('Transição de status não permitida.');
         }
 
         // Verifica se a transição solicitada é válida
         if (!in_array($novoStatus, $transicoesPermitidas[$statusAtual] ?? [])) {
-            throw new Exception("Transição de status inválida de {$statusAtual} para {$novoStatus}.", 422);
+            throw new DomainException('Transição de status não permitida.');
         }
 
         $solicitacao->status = $novoStatus;

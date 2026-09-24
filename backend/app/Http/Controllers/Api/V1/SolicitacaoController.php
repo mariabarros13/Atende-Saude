@@ -8,7 +8,6 @@ use App\Http\Requests\UpdateStatusRequest;
 use App\Http\Resources\SolicitacaoResource;
 use App\Models\Solicitacao;
 use App\Services\SolicitacaoService;
-use Exception;
 use Illuminate\Http\Request;
 
 class SolicitacaoController extends Controller
@@ -23,17 +22,10 @@ class SolicitacaoController extends Controller
     // Listagem paginada com filtros
     public function index(Request $request)
     {
-        $query = Solicitacao::query();
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-        if ($request->has('categoria')) {
-            $query->where('categoria', $request->categoria);
-        }
-        if ($request->has('prioridade')) {
-            $query->where('prioridade', $request->prioridade);
-        }
+        $query = Solicitacao::query()
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when($request->filled('categoria'), fn ($query) => $query->where('categoria', $request->input('categoria')))
+            ->when($request->filled('prioridade'), fn ($query) => $query->where('prioridade', $request->input('prioridade')));
 
         $solicitacoes = $query->orderBy('created_at', 'desc')->paginate(10);
 
@@ -64,15 +56,11 @@ class SolicitacaoController extends Controller
     {
         $solicitacao = Solicitacao::findOrFail($id);
 
-        try {
-            $solicitacaoAtualizada = $this->solicitacaoService->atualizarStatus(
-                $solicitacao,
-                $request->validated()['status']
-            );
+        $solicitacaoAtualizada = $this->solicitacaoService->atualizarStatus(
+            $solicitacao,
+            $request->validated()['status']
+        );
 
-            return new SolicitacaoResource($solicitacaoAtualizada);
-        } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 400);
-        }
+        return new SolicitacaoResource($solicitacaoAtualizada);
     }
 }

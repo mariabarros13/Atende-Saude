@@ -1,4 +1,4 @@
-FROM php:8.3-cli
+FROM php:8.4-cli
 
 # Instala dependências do sistema e extensões necessárias do PHP
 RUN apt-get update && apt-get install -y \
@@ -20,10 +20,14 @@ COPY . /app
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Instala as dependências ignorando verificações estritas de plataforma
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --ignore-platform-reqs
+# Instala as dependências compatíveis com a versão do PHP da imagem
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-EXPOSE 10000
+# Remove manifests copied from the host and rebuild them for production dependencies
+RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
+    && php artisan package:discover --ansi
 
-# Inicia o servidor do Laravel na porta exigida pelo Render
-CMD php artisan serve --host=0.0.0.0 --port=10000
+EXPOSE 8000
+
+# Inicia o servidor do Laravel
+CMD php artisan serve --host=0.0.0.0 --port=8000
